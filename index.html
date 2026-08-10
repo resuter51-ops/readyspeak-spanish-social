@@ -432,12 +432,12 @@ function tryUnlock() {
   var input = document.getElementById('lockInput').value.trim();
   if (!input) return;
   document.getElementById('lockError').style.display = 'none';
-  fetch('https://john-174a7c51.base44.app/functions/verifyLicense', {
+  fetch('https://john-174a7c51.base44.app/functions/verifyPhrasebookLicense', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ license: input, product: 'spanish-social' })
+    body: JSON.stringify({ license_key: input, phrasebook: 'spanish-social' })
   }).then(function(res) { return res.json(); }).then(function(data) {
-    if (data.success) {
+    if (data.valid === true) {
       localStorage.setItem('license_spanish_social', input);
       unlocked = true;
       document.getElementById('lockOverlay').style.display = 'none';
