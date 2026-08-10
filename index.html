@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="theme-color" content="#c0392b"/>
+<title>ReadySpeak Spanish — Social Edition</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(160deg, #c0392b 0%, #8e1212 100%); min-height: 100vh; padding-bottom: 80px; }
+  h1 { text-align:center; color:white; font-size:1.4rem; font-weight:900; padding: 18px 16px 4px; text-shadow: 1px 1px 6px rgba(0,0,0,0.3); }
+  .subtitle { text-align:center; color:rgba(255,255,255,0.85); font-size:0.82rem; margin-bottom:16px; }
+  .brand { text-align:center; color:rgba(255,255,255,0.6); font-size:0.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding-top:6px; }
+  .save-hint { background:rgba(0,0,0,0.2); color:rgba(255,255,255,0.9); font-size:0.78rem; padding:10px 16px; text-align:center; line-height:1.5; }
+  .save-hint b { color: white; }
+  .dir-toggle { display:flex; gap:8px; padding:12px 16px 4px; max-width:460px; margin:0 auto; }
+  .dir-btn { flex:1; padding:10px; border:2px solid rgba(255,255,255,0.4); border-radius:12px; background:transparent; color:white; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all 0.2s; }
+  .dir-btn.active { background:white; color:#c0392b; border-color:white; }
+  .search-bar { display:flex; align-items:center; background:rgba(255,255,255,0.95); border-radius:14px; margin:12px 16px; padding:10px 14px; gap:8px; max-width:460px; margin-left:auto; margin-right:auto; }
+  .search-icon { font-size:1rem; }
+  .search-bar input { border:none; outline:none; font-size:0.95rem; width:100%; background:transparent; color:#2c3e50; }
+  .cat-row { display:flex; gap:8px; overflow-x:auto; padding:0 16px 12px; max-width:460px; margin:0 auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .cat-row::-webkit-scrollbar { display:none; }
+  .cat-pill { flex-shrink:0; padding:8px 14px; border-radius:20px; border:none; cursor:pointer; font-weight:700; font-size:0.82rem; white-space:nowrap; background:rgba(255,255,255,0.25); color:white; transition:all 0.2s; }
+  .cat-pill.active { background:white; color:#c0392b; }
+  .phrase-list { padding:0 16px; max-width:460px; margin:0 auto; }
+  .phrase-card { background:white; border-radius:14px; padding:14px 16px; margin-bottom:10px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:transform 0.15s; position:relative; }
+  .phrase-card:active { transform:scale(0.98); }
+  .phrase-card.speaking { box-shadow:0 0 0 3px #c0392b, 0 3px 12px rgba(0,0,0,0.12); }
+  .phrase-en { font-size:0.95rem; color:#2c3e50; font-weight:600; margin-bottom:6px; line-height:1.4; }
+  .phrase-es { font-size:1.1rem; color:#c0392b; font-weight:700; line-height:1.4; display:flex; align-items:center; gap:8px; }
+  .phrase-es .speak-icon { font-size:1.2rem; flex-shrink:0; }
+  .phrase-tag { font-size:0.65rem; color:#999; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+  .no-results { text-align:center; color:rgba(255,255,255,0.7); padding:40px 16px; font-size:0.95rem; }
+  .now-speaking { position:fixed; bottom:0; left:0; right:0; background:#c0392b; color:white; padding:14px 20px; text-align:center; font-weight:700; font-size:0.9rem; transform:translateY(100%); transition:transform 0.3s; z-index:100; }
+  .now-speaking.show { transform:translateY(0); }
+  .wave { margin-right:8px; }
+  .add-phrase-btn { display:block; width:calc(100% - 32px); margin:12px auto; padding:14px; background:linear-gradient(135deg, #c0392b, #e67e22); color:white; border:none; border-radius:14px; font-size:1rem; font-weight:700; cursor:pointer; letter-spacing:0.5px; max-width:460px; }
+  .add-phrase-btn:active { opacity:0.85; }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:999; align-items:flex-end; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal-box { background:white; border-radius:24px 24px 0 0; padding:24px 20px 40px; width:100%; max-width:500px; animation:slideUp 0.25s ease; }
+  @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  .modal-title { font-size:1.15rem; font-weight:800; color:#2c3e50; margin-bottom:16px; text-align:center; }
+  .modal-label { font-size:0.8rem; font-weight:700; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; margin-top:12px; }
+  .modal-input, .modal-select { width:100%; padding:12px 14px; border:2px solid #e0e0e0; border-radius:12px; font-size:1rem; color:#2c3e50; box-sizing:border-box; outline:none; font-family:inherit; }
+  .modal-input:focus, .modal-select:focus { border-color:#c0392b; }
+  .modal-btn-row { display:flex; gap:10px; margin-top:18px; }
+  .modal-cancel { flex:1; padding:13px; border:2px solid #ddd; background:white; border-radius:12px; font-size:0.95rem; font-weight:700; color:#666; cursor:pointer; }
+  .modal-save { flex:2; padding:13px; background:linear-gradient(135deg, #c0392b, #e67e22); border:none; border-radius:12px; font-size:0.95rem; font-weight:700; color:white; cursor:pointer; }
+  .modal-save:active, .modal-cancel:active { opacity:0.8; }
+  .modal-error { color:#e74c3c; font-size:0.82rem; margin-top:8px; text-align:center; min-height:18px; }
+  .delete-phrase { position:absolute; top:8px; right:8px; background:none; border:none; color:#ccc; font-size:1rem; cursor:pointer; padding:4px 6px; border-radius:8px; line-height:1; }
+  .delete-phrase:active { color:#e74c3c; }
+  .custom-badge { display:inline-block; background:#f0f4ff; color:#c0392b; font-size:0.6rem; font-weight:700; padding:1px 6px; border-radius:6px; margin-left:6px; letter-spacing:0.5px; vertical-align:middle; }
+  .licensed { text-align:center; color:rgba(255,255,255,0.45); font-size:0.65rem; padding:4px 16px 0; }
+</style>
+
+<style id="lock-styles">
+#lockOverlay{position:fixed;inset:0;z-index:99999;background:rgba(5,5,10,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;font-family:'Segoe UI',Arial,sans-serif}
+#lockOverlay .lock-icon{font-size:48px;margin-bottom:16px}
+#lockOverlay h2{color:#fff;font-size:22px;margin-bottom:8px;letter-spacing:1px}
+#lockOverlay p{color:#888;font-size:14px;line-height:1.6;max-width:320px;margin-bottom:20px}
+#lockOverlay .lock-input{padding:12px 16px;border-radius:10px;border:2px solid #333;background:#111;color:#fff;font-size:16px;width:260px;text-align:center;outline:none;margin-bottom:12px}
+#lockOverlay .lock-input:focus{border-color:#c0392b}
+#lockOverlay .lock-btn{padding:12px 32px;border-radius:10px;border:none;background:#c0392b;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;letter-spacing:1px;transition:all 0.2s}
+#lockOverlay .lock-btn:hover{background:#e74c3c;box-shadow:0 0 15px rgba(192,57,43,0.4)}
+#lockOverlay .lock-error{color:#e04040;font-size:13px;margin-top:8px;display:none}
+#lockOverlay .lock-demo{margin-top:18px;color:#555;font-size:13px}
+#lockOverlay .lock-demo a{color:#00aaff;text-decoration:none}
+#lockOverlay .lock-buy{margin-top:14px;display:inline-block;padding:8px 20px;border-radius:8px;background:rgba(192,57,43,0.2);border:1px solid rgba(192,57,43,0.5);color:#c0392b;text-decoration:none;font-size:13px;font-weight:bold}
+#lockOverlay .lock-buy:hover{background:rgba(192,57,43,0.35);color:#fff}
+</style>
+</head>
+<body>
+<div id="lockOverlay" style="display:none;">
+  <div class="lock-icon">🔒</div>
+  <h2>Unlock Full Phrasebook</h2>
+  <p>Enter your license key to unlock all social and travel phrases. Don't have a key? Get instant access for $4.99.</p>
+  <input type="text" class="lock-input" id="lockInput" placeholder="Enter license key" onkeypress="if(event.key==='Enter')tryUnlock()"/>
+  <button class="lock-btn" onclick="tryUnlock()">Unlock Now</button>
+  <div class="lock-error" id="lockError">Invalid code. Please try again.</div>
+  <a href="https://wordsandwheels.net" class="lock-buy">Buy Access — $4.99</a>
+  <div class="lock-demo">Want to try first? <a href="#" onclick="enterDemo();return false;">Browse demo (10 phrases)</a></div>
+</div>
+
+<div id="app">
+  <h1>ReadySpeak Spanish</h1>
+  <div class="brand">Social Edition</div>
+  <div class="subtitle">Travel, Conversation &amp; Dining</div>
+
+  <div class="save-hint">
+    <b>Tap any phrase</b> to hear it spoken aloud. Your custom phrases are saved on this device.
+  </div>
+
+  <div class="dir-toggle">
+    <button class="dir-btn active" onclick="setDirection('en-tl')">English &rarr; Spanish</button>
+    <button class="dir-btn" onclick="setDirection('tl-en')">Spanish &rarr; English</button>
+  </div>
+
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search phrases..." oninput="renderPhrases()"/>
+  </div>
+
+  <div class="cat-row" id="catRow"></div>
+  <div class="phrase-list" id="phraseList"></div>
+  <button class="add-phrase-btn" onclick="openModal()">+ Add Your Own Phrase</button>
+</div>
+
+<div class="now-speaking" id="nowSpeaking">
+  <span class="wave">🔊</span><span id="speakingText"></span>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="modal-title">Add Your Own Phrase</div>
+    <div class="modal-label">English</div>
+    <input type="text" class="modal-input" id="customEn" placeholder="Enter English phrase"/>
+    <div class="modal-label">Spanish</div>
+    <input type="text" class="modal-input" id="customTl" placeholder="Enter Spanish phrase"/>
+    <div class="modal-label">Category</div>
+    <select class="modal-select" id="customCat">
+      <option value="Greetings">Greetings</option>
+      <option value="Conversation">Conversation</option>
+      <option value="Dining">Dining</option>
+      <option value="Travel">Travel</option>
+      <option value="Shopping">Shopping</option>
+      <option value="Directions">Directions</option>
+      <option value="Emergency">Emergency</option>
+    </select>
+    <div class="modal-error" id="modalError"></div>
+    <div class="modal-btn-row">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-save" onclick="saveCustomPhrase()">Save Phrase</button>
+    </div>
+  </div>
+</div>
+
+<div class="licensed">ReadySpeak&trade; &mdash; Social Edition</div>
+
+<script>
+// ===== PHRASES =====
+const PHRASES = [
+  // --- Greetings ---
+  { "cat": "Greetings", "en": "Hello", "tl": "Hola" },
+  { "cat": "Greetings", "en": "Good morning", "tl": "Buenos días" },
+  { "cat": "Greetings", "en": "Good afternoon", "tl": "Buenas tardes" },
+  { "cat": "Greetings", "en": "Good night", "tl": "Buenas noches" },
+  { "cat": "Greetings", "en": "How are you?", "tl": "¿Cómo estás?" },
+  { "cat": "Greetings", "en": "I'm fine, thank you", "tl": "Estoy bien, gracias" },
+  { "cat": "Greetings", "en": "Nice to meet you", "tl": "Mucho gusto" },
+  { "cat": "Greetings", "en": "My name is...", "tl": "Me llamo..." },
+  { "cat": "Greetings", "en": "What is your name?", "tl": "¿Cómo te llamas?" },
+  { "cat": "Greetings", "en": "See you later", "tl": "Hasta luego" },
+  { "cat": "Greetings", "en": "Goodbye", "tl": "Adiós" },
+  { "cat": "Greetings", "en": "Welcome", "tl": "Bienvenido" },
+  { "cat": "Greetings", "en": "Where are you from?", "tl": "¿De dónde eres?" },
+  { "cat": "Greetings", "en": "I'm from the United States", "tl": "Soy de los Estados Unidos" },
+  { "cat": "Greetings", "en": "I don't speak much Spanish", "tl": "No hablo mucho español" },
+  { "cat": "Greetings", "en": "Do you speak English?", "tl": "¿Hablas inglés?" },
+  { "cat": "Greetings", "en": "Can you repeat that?", "tl": "¿Puedes repetir eso?" },
+  { "cat": "Greetings", "en": "Please speak slower", "tl": "Por favor habla más despacio" },
+
+  // --- Conversation ---
+  { "cat": "Conversation", "en": "Yes", "tl": "Sí" },
+  { "cat": "Conversation", "en": "No", "tl": "No" },
+  { "cat": "Conversation", "en": "Thank you", "tl": "Gracias" },
+  { "cat": "Conversation", "en": "You're welcome", "tl": "De nada" },
+  { "cat": "Conversation", "en": "Please", "tl": "Por favor" },
+  { "cat": "Conversation", "en": "Excuse me", "tl": "Disculpe" },
+  { "cat": "Conversation", "en": "I'm sorry", "tl": "Lo siento" },
+  { "cat": "Conversation", "en": "I don't understand", "tl": "No entiendo" },
+  { "cat": "Conversation", "en": "I understand", "tl": "Entiendo" },
+  { "cat": "Conversation", "en": "Maybe", "tl": "Quizás" },
+  { "cat": "Conversation", "en": "I like it", "tl": "Me gusta" },
+  { "cat": "Conversation", "en": "I don't like it", "tl": "No me gusta" },
+  { "cat": "Conversation", "en": "That's funny", "tl": "Eso es gracioso" },
+  { "cat": "Conversation", "en": "How do you say... in Spanish?", "tl": "¿Cómo se dice... en español?" },
+  { "cat": "Conversation", "en": "What does that mean?", "tl": "¿Qué significa eso?" },
+  { "cat": "Conversation", "en": "Can you help me?", "tl": "¿Me puedes ayudar?" },
+  { "cat": "Conversation", "en": "I'm just looking", "tl": "Solo estoy mirando" },
+  { "cat": "Conversation", "en": "No problem", "tl": "No hay problema" },
+  { "cat": "Conversation", "en": "Cheers!", "tl": "¡Salud!" },
+  { "cat": "Conversation", "en": "That's beautiful", "tl": "Eso es hermoso" },
+
+  // --- Dining ---
+  { "cat": "Dining", "en": "A table for two, please", "tl": "Una mesa para dos, por favor" },
+  { "cat": "Dining", "en": "Can I see the menu?", "tl": "¿Puedo ver el menú?" },
+  { "cat": "Dining", "en": "I would like...", "tl": "Quisiera..." },
+  { "cat": "Dining", "en": "I'm hungry", "tl": "Tengo hambre" },
+  { "cat": "Dining", "en": "I'm thirsty", "tl": "Tengo sed" },
+  { "cat": "Dining", "en": "Can I have some water?", "tl": "¿Me puede dar agua?" },
+  { "cat": "Dining", "en": "I would like a coffee", "tl": "Quisiera un café" },
+  { "cat": "Dining", "en": "A beer, please", "tl": "Una cerveza, por favor" },
+  { "cat": "Dining", "en": "A glass of wine, please", "tl": "Una copa de vino, por favor" },
+  { "cat": "Dining", "en": "What do you recommend?", "tl": "¿Qué recomienda?" },
+  { "cat": "Dining", "en": "The check, please", "tl": "La cuenta, por favor" },
+  { "cat": "Dining", "en": "Is this spicy?", "tl": "¿Esto es picante?" },
+  { "cat": "Dining", "en": "I'm allergic to...", "tl": "Soy alérgico a..." },
+  { "cat": "Dining", "en": "No ice, please", "tl": "Sin hielo, por favor" },
+  { "cat": "Dining", "en": "Can I have the bill?", "tl": "¿Me trae la cuenta?" },
+  { "cat": "Dining", "en": "This is delicious", "tl": "Esto está delicioso" },
+  { "cat": "Dining", "en": "Can I have more?", "tl": "¿Me puede dar más?" },
+  { "cat": "Dining", "en": "I'm a vegetarian", "tl": "Soy vegetariano" },
+  { "cat": "Dining", "en": "Do you have vegetarian options?", "tl": "¿Tienen opciones vegetarianas?" },
+  { "cat": "Dining", "en": "Breakfast", "tl": "Desayuno" },
+  { "cat": "Dining", "en": "Lunch", "tl": "Almuerzo" },
+  { "cat": "Dining", "en": "Dinner", "tl": "Cena" },
+
+  // --- Travel ---
+  { "cat": "Travel", "en": "Where is the airport?", "tl": "¿Dónde está el aeropuerto?" },
+  { "cat": "Travel", "en": "Where is the bus station?", "tl": "¿Dónde está la estación de autobuses?" },
+  { "cat": "Travel", "en": "Where is the train station?", "tl": "¿Dónde está la estación de tren?" },
+  { "cat": "Travel", "en": "How much is a ticket?", "tl": "¿Cuánto cuesta un boleto?" },
+  { "cat": "Travel", "en": "What time does it leave?", "tl": "¿A qué hora sale?" },
+  { "cat": "Travel", "en": "Where is the hotel?", "tl": "¿Dónde está el hotel?" },
+  { "cat": "Travel", "en": "I have a reservation", "tl": "Tengo una reserva" },
+  { "cat": "Travel", "en": "Where is the restroom?", "tl": "¿Dónde está el baño?" },
+  { "cat": "Travel", "en": "Where is the beach?", "tl": "¿Dónde está la playa?" },
+  { "cat": "Travel", "en": "Is it far?", "tl": "¿Está lejos?" },
+  { "cat": "Travel", "en": "Can you call a taxi?", "tl": "¿Puede llamar un taxi?" },
+  { "cat": "Travel", "en": "How much is the fare?", "tl": "¿Cuánto cuesta el viaje?" },
+  { "cat": "Travel", "en": "I need a map", "tl": "Necesito un mapa" },
+  { "cat": "Travel", "en": "What time is it?", "tl": "¿Qué hora es?" },
+  { "cat": "Travel", "en": "I lost my passport", "tl": "Perdí mi pasaporte" },
+  { "cat": "Travel", "en": "Where is the embassy?", "tl": "¿Dónde está la embajada?" },
+  { "cat": "Travel", "en": "Can I use my credit card?", "tl": "¿Puedo usar mi tarjeta de crédito?" },
+  { "cat": "Travel", "en": "Where is the ATM?", "tl": "¿Dónde hay un cajero?" },
+  { "cat": "Travel", "en": "I need a doctor", "tl": "Necesito un médico" },
+  { "cat": "Travel", "en": "Where is the pharmacy?", "tl": "¿Dónde está la farmacia?" },
+
+  // --- Shopping ---
+  { "cat": "Shopping", "en": "How much does this cost?", "tl": "¿Cuánto cuesta esto?" },
+  { "cat": "Shopping", "en": "That's too expensive", "tl": "Es muy caro" },
+  { "cat": "Shopping", "en": "Can I pay with cash?", "tl": "¿Puedo pagar en efectivo?" },
+  { "cat": "Shopping", "en": "Do you take credit cards?", "tl": "¿Aceptan tarjetas de crédito?" },
+  { "cat": "Shopping", "en": "I'm just browsing", "tl": "Solo estoy mirando" },
+  { "cat": "Shopping", "en": "Can I try it on?", "tl": "¿Puedo probármelo?" },
+  { "cat": "Shopping", "en": "Do you have this in a different size?", "tl": "¿Tiene esto en otra talla?" },
+  { "cat": "Shopping", "en": "Do you have this in a different color?", "tl": "¿Tiene esto en otro color?" },
+  { "cat": "Shopping", "en": "I'll take it", "tl": "Me lo llevo" },
+  { "cat": "Shopping", "en": "I don't want it", "tl": "No lo quiero" },
+  { "cat": "Shopping", "en": "Can I get a receipt?", "tl": "¿Me da un recibo?" },
+  { "cat": "Shopping", "en": "Is there a discount?", "tl": "¿Hay algún descuento?" },
+  { "cat": "Shopping", "en": "Where is the market?", "tl": "¿Dónde está el mercado?" },
+  { "cat": "Shopping", "en": "Can you wrap it as a gift?", "tl": "¿Puede envolverlo de regalo?" },
+
+  // --- Directions ---
+  { "cat": "Directions", "en": "Where is...?", "tl": "¿Dónde está...?" },
+  { "cat": "Directions", "en": "Turn left", "tl": "Gire a la izquierda" },
+  { "cat": "Directions", "en": "Turn right", "tl": "Gire a la derecha" },
+  { "cat": "Directions", "en": "Go straight", "tl": "Siga derecho" },
+  { "cat": "Directions", "en": "Stop here", "tl": "Pare aquí" },
+  { "cat": "Directions", "en": "How far is it?", "tl": "¿A qué distancia está?" },
+  { "cat": "Directions", "en": "Is it near here?", "tl": "¿Está cerca de aquí?" },
+  { "cat": "Directions", "en": "I'm lost", "tl": "Estoy perdido" },
+  { "cat": "Directions", "en": "Can you show me on the map?", "tl": "¿Me puede mostrar en el mapa?" },
+  { "cat": "Directions", "en": "Which way to the center?", "tl": "¿Cómo se va al centro?" },
+
+  // --- Emergency ---
+  { "cat": "Emergency", "en": "Help!", "tl": "¡Ayuda!" },
+  { "cat": "Emergency", "en": "Call the police", "tl": "Llame a la policía" },
+  { "cat": "Emergency", "en": "Call an ambulance", "tl": "Llame a una ambulancia" },
+  { "cat": "Emergency", "en": "I need a doctor", "tl": "Necesito un médico" },
+  { "cat": "Emergency", "en": "There's been an accident", "tl": "Ha habido un accidente" },
+  { "cat": "Emergency", "en": "Someone stole my wallet", "tl": "Alguien robó mi cartera" },
+  { "cat": "Emergency", "en": "I don't feel well", "tl": "No me siento bien" },
+  { "cat": "Emergency", "en": "Fire!", "tl": "¡Fuego!" }
+];
+
+// ===== STATE =====
+let direction = 'en-tl';
+let activeCat = 'All';
+let searchQuery = '';
+const TL_LANG = 'es-ES';
+
+function loadCustomPhrases() {
+  try { return JSON.parse(localStorage.getItem('customPhrases_spanish_social') || '[]'); }
+  catch { return []; }
+}
+function saveCustomPhrasesToStorage(arr) {
+  localStorage.setItem('customPhrases_spanish_social', JSON.stringify(arr));
+}
+let CUSTOM_PHRASES = loadCustomPhrases();
+
+function getAllPhrases() { return [...PHRASES, ...CUSTOM_PHRASES]; }
+function getCategories() {
+  const all = getAllPhrases();
+  const cats = ['All', ...Array.from(new Set(all.map(p => p.cat)))];
+  if (CUSTOM_PHRASES.length > 0 && !cats.includes('My Phrases')) cats.push('My Phrases');
+  return cats;
+}
+
+function init() {
+  renderCategories();
+  renderPhrases();
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  }
+  document.addEventListener('touchstart', function unlock() {
+    if (window.speechSynthesis) {
+      const u = new SpeechSynthesisUtterance('');
+      window.speechSynthesis.speak(u);
+    }
+    document.removeEventListener('touchstart', unlock);
+  }, { once: true });
+}
+
+function setDirection(dir) {
+  direction = dir;
+  document.querySelectorAll('.dir-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderPhrases();
+}
+
+function renderCategories() {
+  const row = document.getElementById('catRow');
+  const cats = getCategories();
+  row.innerHTML = cats.map(function(c) {
+    return '<button class="cat-pill ' + (c === activeCat ? 'active' : '') + '" onclick="setCategory(\'' + c + '\')">' + c + '</button>';
+  }).join('');
+}
+
+function setCategory(cat) {
+  activeCat = cat;
+  renderCategories();
+  renderPhrases();
+}
+
+function renderPhrases() {
+  searchQuery = document.getElementById('searchInput').value.toLowerCase();
+  const list = document.getElementById('phraseList');
+  let all = getAllPhrases();
+
+  if (activeCat !== 'All' && activeCat !== 'My Phrases') {
+    all = all.filter(function(p) { return p.cat === activeCat; });
+  }
+  if (activeCat === 'My Phrases') {
+    all = CUSTOM_PHRASES;
+  }
+  if (searchQuery) {
+    all = all.filter(function(p) {
+      return p.en.toLowerCase().includes(searchQuery) || p.tl.toLowerCase().includes(searchQuery);
+    });
+  }
+
+  if (all.length === 0) {
+    list.innerHTML = '<div class="no-results">No phrases found. Try a different search.</div>';
+    return;
+  }
+
+  list.innerHTML = all.map(function(p, i) {
+    var idx = PHRASES.indexOf(p);
+    var isCustom = idx === -1;
+    var enText = direction === 'en-tl' ? p.en : p.tl;
+    var tlText = direction === 'en-tl' ? p.tl : p.en;
+    var speakLang = direction === 'en-tl' ? TL_LANG : 'en-US';
+    var safeText = tlText.replace(/'/g, "\\'");
+    var customIdx = isCustom ? CUSTOM_PHRASES.indexOf(p) : -1;
+    return '<div class="phrase-card" onclick="speak(this, \'' + safeText + '\', \'' + speakLang + '\')">' +
+      '<div class="phrase-tag">' + p.cat + '</div>' +
+      '<div class="phrase-en">' + enText + '</div>' +
+      '<div class="phrase-es"><span class="speak-icon">🔊</span>' + tlText + (isCustom ? '<span class="custom-badge">MY PHRASE</span>' : '') + '</div>' +
+      (isCustom ? '<button class="delete-phrase" onclick="deleteCustomPhrase(' + customIdx + '); event.stopPropagation();">✕</button>' : '') +
+    '</div>';
+  }).join('');
+}
+
+var currentUtterance = null;
+function speak(card, text, lang) {
+  document.querySelectorAll('.phrase-card.speaking').forEach(function(c) { c.classList.remove('speaking'); });
+  card.classList.add('speaking');
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = 0.85;
+    u.onend = function() {
+      card.classList.remove('speaking');
+      document.getElementById('nowSpeaking').classList.remove('show');
+    };
+    u.onstart = function() {
+      document.getElementById('speakingText').textContent = text;
+      document.getElementById('nowSpeaking').classList.add('show');
+    };
+    currentUtterance = u;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+// ===== CUSTOM PHRASES =====
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('customEn').value = '';
+  document.getElementById('customTl').value = '';
+  document.getElementById('modalError').textContent = '';
+}
+function saveCustomPhrase() {
+  var en = document.getElementById('customEn').value.trim();
+  var tl = document.getElementById('customTl').value.trim();
+  var cat = document.getElementById('customCat').value;
+  if (!en || !tl) {
+    document.getElementById('modalError').textContent = 'Both fields are required.';
+    return;
+  }
+  CUSTOM_PHRASES.push({ en: en, tl: tl, cat: cat || 'Custom' });
+  saveCustomPhrasesToStorage(CUSTOM_PHRASES);
+  closeModal();
+  renderCategories();
+  renderPhrases();
+}
+function deleteCustomPhrase(idx) {
+  CUSTOM_PHRASES.splice(idx, 1);
+  saveCustomPhrasesToStorage(CUSTOM_PHRASES);
+  renderCategories();
+  renderPhrases();
+}
+
+// ===== LICENSE =====
+var DEMO_LIMIT = 10;
+var unlocked = false;
+
+function tryUnlock() {
+  var input = document.getElementById('lockInput').value.trim();
+  if (!input) return;
+  document.getElementById('lockError').style.display = 'none';
+  fetch('https://john-174a7c51.base44.app/functions/verifyLicense', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ license: input, product: 'spanish-social' })
+  }).then(function(res) { return res.json(); }).then(function(data) {
+    if (data.success) {
+      localStorage.setItem('license_spanish_social', input);
+      unlocked = true;
+      document.getElementById('lockOverlay').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      init();
+    } else {
+      document.getElementById('lockError').style.display = 'block';
+    }
+  }).catch(function(e) {
+    document.getElementById('lockError').style.display = 'block';
+  });
+}
+
+function enterDemo() {
+  document.getElementById('lockOverlay').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  init();
+}
+
+// On load
+(function() {
+  var saved = localStorage.getItem('license_spanish_social');
+  if (saved) {
+    unlocked = true;
+    document.getElementById('lockOverlay').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    init();
+  } else {
+    document.getElementById('lockOverlay').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+})();
+</script>
+</body>
+</html>
