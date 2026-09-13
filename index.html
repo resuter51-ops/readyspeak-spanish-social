@@ -335,7 +335,7 @@ function setCategory(cat) {
 function renderPhrases() {
   searchQuery = document.getElementById('searchInput').value.toLowerCase();
   const list = document.getElementById('phraseList');
-  let all = getAllPhrases();
+  let all = getAllPhrases();\n\n  // The public demo shows only the first ten phrases.\n  if (!unlocked) { all = all.slice(0, DEMO_LIMIT); }
 
   if (activeCat !== 'All' && activeCat !== 'My Phrases') {
     all = all.filter(function(p) { return p.cat === activeCat; });
